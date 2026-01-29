@@ -30,9 +30,14 @@ services:
       TZ: Asia/Shanghai
       DEBUG_MODE: ${DEBUG_MODE:-false}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      COOKIE_FILE: /data/cookies.txt
+      COOKIE_EXPIRY_DAYS: ${COOKIE_EXPIRY_DAYS:-15}
+      COOKIE_REMINDER_INTERVAL_DAYS: ${COOKIE_REMINDER_INTERVAL_DAYS:-5}
+      LOG_FILE: /data/monitor.log
 
     volumes:
       - ./data:/data
+      - ../cookies.txt:/data/cookies.txt:ro
     working_dir: /app
     # Keep container running
     command: ["sh", "-c", "echo 'Monitor container started. Waiting for Ofelia scheduler...' && sleep infinity"]
