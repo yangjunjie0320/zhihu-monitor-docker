@@ -164,9 +164,8 @@ zhihu-monitor-docker/
 │   ├── models.py       # Data models
 │   ├── rss_client.py   # RSS fetching
 │   ├── webhook_client.py # Webhook notifications
+│   ├── cookie_manager.py # Cookie parsing (also CLI: python -m src.cookie_manager)
 │   └── ...
-├── scripts/
-│   └── parse_cookies.py # Cookie file parser
 ├── requirements.txt    # Python dependencies
 ├── environment.yml     # Conda environment (for local development)
 └── data/               # State file directory (gitignored)

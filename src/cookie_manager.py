@@ -135,3 +135,12 @@ class CookieManager:
             )
 
         return status
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python -m src.cookie_manager <cookie_file>", file=sys.stderr)
+        sys.exit(1)
+    manager = CookieManager(Path(sys.argv[1]))
+    print(manager.parse_cookies())
