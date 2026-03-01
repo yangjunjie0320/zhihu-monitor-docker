@@ -1,7 +1,6 @@
 """Constants and enums for Zhihu monitor."""
 
 from enum import Enum
-from typing import Tuple
 
 
 class ContentType(Enum):
@@ -47,12 +46,6 @@ class NotificationType(Enum):
     COOKIE_EXPIRY = "cookie_expiry"
     DEBUG = "debug"
 
-
-# Important Zhihu cookies for authentication
-IMPORTANT_COOKIES = {
-    'SESSIONID', 'JOID', 'osd', '_xsrf', '_zap', 'd_c0', 'z_c0',
-    '__zse_ck', 'HMACCOUNT', 'Hm_lvt_98beee57fd2ef70ccdd5ca52b9740c49'
-}
 
 # HTML entity mapping for decoding
 HTML_ENTITIES = {

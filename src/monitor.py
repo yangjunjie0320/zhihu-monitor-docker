@@ -2,11 +2,10 @@
 
 import hashlib
 import logging
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from .constants import ContentType
+from .cookie_manager import CookieManager
 from .models import Config, Item, State
 from .rss_client import RSSClient
 from .state_manager import StateManager
@@ -29,6 +28,10 @@ class Monitor:
         self.state_manager = StateManager(config.state_file, config.max_seen_ids)
         self.rss_client = RSSClient(config)
         self.webhook_client = WebhookClient(config)
+        self.cookie_manager = CookieManager(
+            config.cookie_file,
+            config.cookie_expiry_days
+        )
 
     def _get_item_id(self, item: Dict) -> Optional[str]:
         """Generate item ID from item data.
@@ -135,35 +138,17 @@ class Monitor:
 
         return hours_passed >= self.config.error_report_interval_hours
 
-    def _get_cookie_file_mtime(self) -> Optional[datetime]:
-        """Get modification time of cookie file.
-
-        Returns:
-            Modification time or None if file doesn't exist
-        """
-        if self.config.cookie_file.exists():
-            return datetime.fromtimestamp(
-                self.config.cookie_file.stat().st_mtime,
-                tz=TimeUtils.now_utc().tzinfo
-            )
-        return None
-
     def _check_cookie_expiry(self, state: State) -> None:
         """Check cookie file expiry and send reminder if needed.
 
         Args:
             state: Current state
         """
-        cookie_mtime = self._get_cookie_file_mtime()
-        if not cookie_mtime:
-            logger.warning(f"Cookie file not found: {self.config.cookie_file}")
+        status = self.cookie_manager.check_expiry()
+        if not status:
             return
 
-        expiry_date = cookie_mtime + timedelta(days=self.config.cookie_expiry_days)
-        days_until_expiry = (expiry_date - TimeUtils.now_utc()).days
-
         should_send_reminder = False
-
         if not state.last_cookie_reminder_time:
             should_send_reminder = True
         else:
@@ -173,18 +158,12 @@ class Monitor:
             if days_since_last_reminder >= self.config.cookie_reminder_interval_days:
                 should_send_reminder = True
 
-        if should_send_reminder and days_until_expiry > 0:
+        if should_send_reminder and not status.is_expired:
             if self.webhook_client.send_cookie_expiry_reminder(
-                cookie_mtime, expiry_date, days_until_expiry
+                status.mtime, status.expiry_date, status.days_until_expiry
             ):
                 self.state_manager.update_cookie_reminder_time(state)
-                logger.info(f"Cookie expiry reminder sent: {days_until_expiry} days until expiry")
-
-        elif days_until_expiry <= 0:
-            logger.warning(
-                f"Cookie file has expired! Last modified: {cookie_mtime}, "
-                f"Expiry: {expiry_date}"
-            )
+                logger.info(f"Cookie expiry reminder sent: {status.days_until_expiry} days until expiry")
 
     def check_updates(self) -> int:
         """Check for updates and return count of new items found.
