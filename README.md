@@ -23,23 +23,26 @@ Use Ofelia (Docker-specific scheduled task runner) to trigger the monitoring scr
 ## Quick Start
 
 ```bash
-# 1. Set environment variables (required)
-export ZHIHU_COOKIES=your_zhihu_cookies_here
+# 1. Set webhook URL (required)
 export WEBHOOK_URL=your_webhook_url_here
 
-# Optional: Set user configuration
-export ZHIHU_USER_ID=shui-qian-xiao-xi
-export ZHIHU_USER_NAME=马前卒official
+# 2. Place cookies.txt file in parent directory (Netscape format)
+# The start.sh script will automatically parse it
 
-# 2. Start all services
+# 3. Start all services
 cd zhihu-monitor-docker
-docker compose up -d --build
+./start.sh
 ```
 
-**Note**: To make environment variables persistent, add them to your shell configuration file (e.g., `~/.bashrc` or `~/.zshrc`):
+**Note**: The `start.sh` script automatically parses `../cookies.txt` (Netscape format) and sets `ZHIHU_COOKIES`. You can also set `COOKIE_FILE` to specify a different path:
 
 ```bash
-echo 'export ZHIHU_COOKIES=your_cookies' >> ~/.bashrc
+COOKIE_FILE=/path/to/cookies.txt ./start.sh
+```
+
+To make environment variables persistent, add them to your shell configuration file:
+
+```bash
 echo 'export WEBHOOK_URL=your_webhook_url' >> ~/.bashrc
 source ~/.bashrc
 ```
@@ -60,7 +63,7 @@ docker logs -f ofelia
 docker logs -f zhihu-monitor
 
 # Manually trigger monitoring once
-docker exec zhihu-monitor python -u /app/monitor.py
+docker exec zhihu-monitor python -u /app/main.py
 
 # Restart all services
 docker compose restart
@@ -108,12 +111,12 @@ If the scheduled tasks are not running:
    ```
    Should show:
    - `ofelia.enabled = true`
-   - `ofelia.job-exec.monitor.schedule = @every 15m`
-   - `ofelia.job-exec.monitor.command = python -u /app/monitor.py`
+   - `ofelia.job-exec.monitor.schedule = 0 */10 * * *`
+   - `ofelia.job-exec.monitor.command = python -u /app/main.py`
 
 6. **Test manual execution:**
    ```bash
-   docker exec zhihu-monitor python -u /app/monitor.py
+   docker exec zhihu-monitor python -u /app/main.py
    ```
    If this works but scheduled tasks don't, the issue is with Ofelia configuration.
 
@@ -152,11 +155,20 @@ docker compose restart
 ```
 zhihu-monitor-docker/
 ├── docker-compose.yml  # Service orchestration
-├── Dockerfile          # Monitor script image
-├── monitor.py          # Monitor script
+├── Dockerfile          # Monitor container image
+├── main.py             # Entry point (scheduled by Ofelia)
+├── start.sh            # Startup script with cookie parsing
+├── src/                # Source modules
+│   ├── monitor.py      # Core monitoring logic
+│   ├── config.py       # Configuration loading
+│   ├── models.py       # Data models
+│   ├── rss_client.py   # RSS fetching
+│   ├── webhook_client.py # Webhook notifications
+│   └── ...
+├── scripts/
+│   └── parse_cookies.py # Cookie file parser
 ├── requirements.txt    # Python dependencies
 ├── environment.yml     # Conda environment (for local development)
-├── .gitignore          # Git ignore rules
 └── data/               # State file directory (gitignored)
     └── state.json      # Record of pushed content
 ```

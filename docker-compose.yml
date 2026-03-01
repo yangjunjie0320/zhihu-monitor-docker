@@ -12,7 +12,7 @@ services:
       NODE_ENV: production
       CACHE_TYPE: memory
       CACHE_EXPIRE: 300
-      ZHIHU_COOKIES: ${ZHIHU_COOKIES}
+      ZHIHU_COOKIES: ${ZHIHU_COOKIES:-}
 
   # Monitor container (kept running, scheduled by Ofelia to execute script)
   zhihu-monitor:
@@ -48,7 +48,7 @@ services:
       # For every 5 seconds, you would need: */5 * * * * * (6 fields with seconds)
       # But Ofelia uses standard cron (5 fields), so this is every 5 minutes
       ofelia.job-exec.monitor.schedule: "0 */10 * * *"
-      ofelia.job-exec.monitor.command: "python -u /app/monitor.py"
+      ofelia.job-exec.monitor.command: "python -u /app/main.py"
       ofelia.job-exec.monitor.working-dir: "/app"
 
   # Ofelia scheduler
